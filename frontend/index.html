@@ -193,46 +193,54 @@
                 <div class="mb-4">
                     <div class="flex justify-between text-sm text-white/70 mb-2">
                         <span>Fortschritt</span>
-                        <span x-text="Math.round(progressPercentage) + '%'"></span>
+                        <span x-text="`${progressPercentage}%`">0%</span>
                     </div>
-                    <div class="w-full bg-white/10 rounded-full h-3 overflow-hidden">
-                        <div 
-                            class="bg-gradient-to-r from-green-400 to-blue-500 h-3 rounded-full progress-transition"
-                            :style="`width: ${progressPercentage}%`"
-                        ></div>
+                    <div class="w-full bg-white/10 rounded-full h-2 overflow-hidden">
+                        <div class="bg-gradient-to-r from-purple-500 to-pink-500 h-full rounded-full transition-all duration-500"
+                            :style="`width: ${progressPercentage}%`"></div>
                     </div>
                 </div>
 
-                <!-- Framework Steps -->
+                <!-- Framework stages should be displayed here -->
                 <div class="space-y-2">
-                    <template x-for="(step, index) in frameworkSteps" :key="step.key">
-                        <div 
-                            class="rounded-lg p-3 transition-all duration-300 hover:scale-102 cursor-pointer"
-                            :class="frameworkProgress[step.key] ? 
-                                'bg-gradient-to-r from-green-500 to-green-600 text-white shadow-lg' : 
-                                'bg-white/5 border-2 border-dashed border-white/20 text-white/80'"
-                        >
-                            <div class="flex items-center space-x-3">
-                                <div class="flex-shrink-0">
-                                    <span x-text="frameworkProgress[step.key] ? '✅' : step.icon"></span>
-                                </div>
-                                <div class="flex-1 min-w-0">
-                                    <p class="text-sm font-medium" x-text="step.title"></p>
-                                    <p class="text-xs opacity-80" x-text="step.description"></p>
-                                </div>
+                    <!-- Loading state -->
+                    <div x-show="frameworkLoading" class="flex items-center p-4 rounded-lg bg-white/5 border border-white/10">
+                        <div class="flex space-x-1 mr-3">
+                            <div class="w-2 h-2 bg-white/80 rounded-full animate-bounce" style="animation-delay: 0ms"></div>
+                            <div class="w-2 h-2 bg-white/80 rounded-full animate-bounce" style="animation-delay: 150ms"></div>
+                            <div class="w-2 h-2 bg-white/80 rounded-full animate-bounce" style="animation-delay: 300ms"></div>
+                        </div>
+                        <div class="text-white/70 text-sm">Lade Framework-Stufen...</div>
+                    </div>
+                    
+                    <!-- Framework stages (loaded from master config) -->
+                    <template x-for="stage in frameworkSteps" :key="stage.key">
+                        <div class="flex items-center p-2 rounded-lg bg-white/5 border border-white/10">
+                            <div class="w-8 h-8 rounded-full flex items-center justify-center mr-3"
+                                :class="frameworkProgress[stage.key] ? 'bg-green-500/20 text-green-400' : 'bg-white/10 text-white/50'">
+                                <span x-text="stage.icon || '📌'" class="text-sm"></span>
+                            </div>
+                            <div class="flex-1">
+                                <div class="text-sm font-medium text-white" x-text="stage.title"></div>
+                                <div class="text-xs text-white/60" x-text="stage.description"></div>
+                            </div>
+                            <div class="ml-3">
+                                <svg x-show="frameworkProgress[stage.key]" 
+                                    class="w-5 h-5 text-green-400" 
+                                    fill="currentColor" 
+                                    viewBox="0 0 20 20">
+                                    <path fill-rule="evenodd" d="M16.707 5.293a1 1 0 010 1.414l-8 8a1 1 0 01-1.414 0l-4-4a1 1 0 011.414-1.414L8 12.586l7.293-7.293a1 1 0 011.414 0z" clip-rule="evenodd"/>
+                                </svg>
                             </div>
                         </div>
                     </template>
+                    
+                    <!-- Message when no framework stages loaded -->
+                    <div x-show="!frameworkLoading && frameworkSteps.length === 0" class="text-center p-4 rounded-lg bg-red-500/10 border border-red-500/20">
+                        <div class="text-red-300 text-sm">⚠️ Konnte Framework-Stufen nicht laden</div>
+                        <div class="text-red-300/70 text-xs mt-1">Überprüfen Sie die Backend-Verbindung</div>
+                    </div>
                 </div>
-
-                <!-- Export Button -->
-                <button 
-                    x-show="progressPercentage >= 100"
-                    @click="showExport = true"
-                    class="w-full mt-4 bg-gradient-to-r from-purple-500 to-pink-500 hover:from-purple-600 hover:to-pink-600 text-white font-semibold py-3 px-4 rounded-lg shadow-lg transform hover:scale-105 transition-all duration-200"
-                >
-                    📄 Strukturierte Ausgabe exportieren
-                </button>
             </div>
 
             <!-- Quick Actions -->
@@ -242,6 +250,14 @@
                     Schnellaktionen
                 </h3>
                 <div class="space-y-2">
+                    <button
+                        @click="reloadFramework()"
+                        :disabled="frameworkLoading"
+                        class="w-full bg-purple-500/20 hover:bg-purple-500/30 text-purple-300 py-2 px-3 rounded-lg text-sm flex items-center space-x-2 transition-all duration-200 disabled:opacity-50"
+                    >
+                        <span>🔄</span>
+                        <span x-text="frameworkLoading ? 'Lädt...' : 'Framework neu laden'"></span>
+                    </button>
                     <button
                         @click="executeCommand('/reset')"
                         class="w-full bg-red-500/20 hover:bg-red-500/30 text-red-300 py-2 px-3 rounded-lg text-sm flex items-center space-x-2 transition-all duration-200"
@@ -420,20 +436,13 @@
                 startTime: Date.now(),
                 commandMode: false,
                 showExport: false,
+                frameworkLoading: true, // Add loading state for framework
                 
-                // Framework progress
-                frameworkProgress: {
-                    problemStatement: false,
-                    whyAnalysis: false,
-                    howMightWe: false,
-                    personas: false,
-                    userJourney: false,
-                    solutionSketch: false,
-                    acceptanceCriteria: false
-                },
+                // Framework progress - will be initialized from loaded stages
+                frameworkProgress: {},
                 
-                // Remove the hardcoded frameworkSteps array and only keep a minimal default
-                frameworkSteps: [],  // Will be loaded from API
+                // Framework steps - will be loaded from the master config file via API
+                frameworkSteps: [],
                 
                 exampleQuestions: [
                     "Unser Team hat Kommunikationsprobleme in Remote-Meetings",
@@ -444,8 +453,9 @@
                 ],
 
                 get progressPercentage() {
-                    const completed = Object.values(this.frameworkProgress).filter(Boolean).length;
-                    return Math.round((completed / 7) * 100);
+                    const completed = Object.values(this.frameworkProgress).filter(v => v === true).length;
+                    const total = Object.keys(this.frameworkProgress).length;
+                    return total > 0 ? Math.round((completed / total) * 100) : 0;
                 },
 
                 get messageCount() {
@@ -457,12 +467,20 @@
                     
                     console.log('Design Thinking Coach initialized');
                     
-                    // Load framework stages from server FIRST
+                    // Load framework stages from server FIRST (this is critical)
                     this.loadFrameworkStages().then(() => {
+                        this.frameworkLoading = false;
+                        console.log('Framework stages loaded:', this.frameworkSteps);
+                        console.log('Framework progress:', this.frameworkProgress);
                         // Then proceed with other initialization
                         setTimeout(() => {
                             this.scrollToBottom();
                         }, 300);
+                    }).catch(error => {
+                        this.frameworkLoading = false;
+                        console.error('Failed to load framework stages:', error);
+                        // Initialize with empty progress if loading fails
+                        this.frameworkProgress = {};
                     });
                     
                     window.addEventListener('resize', () => {
@@ -517,12 +535,12 @@
                         // Add assistant response
                         this.messages.push({
                             type: 'assistant',
-                            content: data.reply,
+                            content: data.message || data.reply, // Support both possible response fields
                             timestamp: Date.now()
                         });
 
                         // Update framework progress
-                        this.updateFrameworkProgress(data.reply);
+                        this.updateFrameworkProgress(data.message || data.reply);
                         
                         // Ensure scroll happens after content is rendered
                         this.scrollToBottom();
@@ -551,14 +569,19 @@
                 },
 
                 async loadFrameworkStages() {
-                    // Try to load framework stages from API
+                    // Load framework stages from API (master config file)
                     try {
                         const backendURL = window.backendURL || '';
                         const response = await fetch(`${backendURL}/api/config`);
+                        
                         if (response.ok) {
                             const data = await response.json();
+                            console.log('Config API response:', data);
+                            
                             if (data.config && data.config.framework && data.config.framework.stages) {
-                                // Update the framework steps from the API
+                                console.log('Framework stages from master config:', data.config.framework.stages);
+                                
+                                // Update the framework steps from the master config
                                 this.frameworkSteps = data.config.framework.stages.map(stage => ({
                                     key: stage.key,
                                     title: stage.title,
@@ -567,17 +590,54 @@
                                     keywords: stage.keywords || []
                                 }));
                                 
-                                // Initialize progress tracking for all stages
+                                // Initialize progress tracking for all loaded stages
                                 this.frameworkProgress = {};
                                 this.frameworkSteps.forEach(step => {
                                     this.frameworkProgress[step.key] = false;
                                 });
                                 
-                                console.log('Framework stages loaded from API:', this.frameworkSteps);
+                                console.log('Framework stages loaded from master config:', this.frameworkSteps);
+                                console.log('Framework progress initialized:', this.frameworkProgress);
+                                return true;
+                            } else {
+                                console.error('Invalid config response: framework stages not found');
+                                throw new Error('Framework stages not found in config');
                             }
+                        } else {
+                            console.error('API config endpoint failed with status:', response.status);
+                            throw new Error(`API config endpoint failed: ${response.status}`);
                         }
                     } catch (error) {
-                        console.warn('Could not load framework stages from API, using defaults', error);
+                        console.error('Failed to load framework stages from master config:', error);
+                        // Set empty arrays if loading fails
+                        this.frameworkSteps = [];
+                        this.frameworkProgress = {};
+                        throw error;
+                    }
+                },
+
+                // Remove the initializeFrameworkProgress method since we're loading from config
+                
+                async reloadFramework() {
+                    this.frameworkLoading = true;
+                    try {
+                        await this.loadFrameworkStages();
+                        // Add a success message
+                        this.messages.push({
+                            type: 'system',
+                            content: '✅ Framework-Stufen wurden neu geladen.',
+                            timestamp: Date.now()
+                        });
+                    } catch (error) {
+                        // Add an error message
+                        this.messages.push({
+                            type: 'system',
+                            content: '❌ Fehler beim Neuladen der Framework-Stufen.',
+                            timestamp: Date.now()
+                        });
+                    } finally {
+                        this.frameworkLoading = false;
+                        this.scrollToBottom();
                     }
                 },
                 
@@ -605,15 +665,11 @@
                     
                     if (command === '/reset') {
                         this.messages = [];
-                        this.frameworkProgress = {
-                            problemStatement: false,
-                            whyAnalysis: false,
-                            howMightWe: false,
-                            personas: false,
-                            userJourney: false,
-                            solutionSketch: false,
-                            acceptanceCriteria: false
-                        };
+                        // Reset framework progress using current framework steps
+                        this.frameworkProgress = {};
+                        this.frameworkSteps.forEach(step => {
+                            this.frameworkProgress[step.key] = false;
+                        });
                         this.messages.push({
                             type: 'system',
                             content: '🔄 Session wurde zurückgesetzt.',
