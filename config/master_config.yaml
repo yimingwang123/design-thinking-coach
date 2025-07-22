@@ -1,0 +1,123 @@
+# Design Thinking Coach Master Configuration File
+# This is the central configuration file for the entire application
+
+# =====================================================================
+# GENERAL SETTINGS
+# =====================================================================
+application:
+  name: "Design Thinking Coach"
+  version: "1.0.0"
+  description: "AI-powered Design Thinking Coach using Azure OpenAI"
+  save_conversations: true
+  log_level: "INFO"
+
+# =====================================================================
+# AI MODEL SETTINGS
+# =====================================================================
+model:
+  # Azure OpenAI Configuration
+  provider: "azure"
+  deployment_name: "gpt-4.1-mini"  # Override with DEPLOYMENT_NAME env var if needed
+  endpoint_url: "https://aifoundry-bundai-101.cognitiveservices.azure.com/"  # Override with ENDPOINT_URL env var
+  api_version: "2025-01-01-preview"
+  
+  # Generation Parameters
+  temperature: 0.3
+  max_tokens: 1000
+  top_p: 0.95
+  frequency_penalty: 0
+  presence_penalty: 0
+  
+  # Mock Mode for development/testing without API key
+  mock_responses: false  # Set to true to use mock responses
+
+# =====================================================================
+# PROMPT CONFIGURATION
+# =====================================================================
+prompts:
+  # System prompt defines the assistant's behavior
+  system_prompt: |
+    You are the Design Thinking Coach, an AI assistant specialized in guiding users through the design thinking process.
+    Your purpose is to help users apply design thinking methodologies to solve problems and develop innovative solutions.
+    
+    Follow these principles in your interactions:
+    1. Be supportive, encouraging, and professional
+    2. Ask clarifying questions when needed
+    3. Guide users through the design thinking stages:
+       - Problem Statement (Understanding and defining the core problem)
+       - Why Analysis (Exploring root causes)
+       - How-Might-We (Reframing problems as opportunities)
+       - Personas (Understanding users and stakeholders)
+       - User Journey (Mapping experiences)
+       - Solution Sketching (Ideating potential solutions)
+       - Acceptance Criteria (Defining success metrics)
+    4. Provide structured feedback and suggestions
+    5. Use clear, jargon-free language
+    6. Keep responses concise and focused
+    
+    Respond in the user's preferred language (default to German if unclear).
+  
+  # Few-shot examples help guide the model's responses  
+  examples: |
+    User: "Wir haben Probleme mit der internen Kommunikation im Team."
+    Assistant: "Das ist ein wichtiges Thema! Lassen Sie uns zunächst das Kernproblem genauer definieren. Können Sie beschreiben, wie sich die Kommunikationsprobleme konkret äußern? Zum Beispiel: Welche Situationen sind besonders problematisch? Wer ist betroffen? Was wäre der ideale Zustand?"
+    
+    User: "Unsere Kunden beschweren sich über den Kundenservice."
+    Assistant: "Vielen Dank für diese Information. Um das Problem besser zu verstehen, sollten wir eine 5-Why-Analyse durchführen. Warum beschweren sich die Kunden? Was sind die häufigsten Beschwerden? Warum treten diese Probleme auf? Haben Sie bereits Feedback von Kunden gesammelt, das wir analysieren können?"
+
+# =====================================================================
+# FRAMEWORK STAGES & PROGRESS TRACKING
+# =====================================================================
+framework:
+  stages:
+    - key: problemStatement
+      title: "Problem Statement"
+      description: "Kernproblem definieren"
+      icon: "❗"
+      keywords: ["problem", "issue", "challenge", "schwierigkeit", "herausforderung", "problemstellung"]
+      
+    - key: whyAnalysis
+      title: "5-Why Analyse"
+      description: "Ursachen ergründen"
+      icon: "🔍"
+      keywords: ["warum", "why", "ursache", "grund", "root cause", "analyse"]
+      
+    - key: howMightWe
+      title: "How-Might-We"
+      description: "Chancen identifizieren"
+      icon: "💡"
+      keywords: ["how might we", "wie könnten wir", "opportunity", "chance", "möglichkeit"]
+      
+    - key: personas
+      title: "Personas"
+      description: "Zielgruppen definieren"
+      icon: "👥"
+      keywords: ["persona", "user", "nutzer", "zielgruppe", "kunde", "stakeholder"]
+      
+    - key: userJourney
+      title: "User Journey"
+      description: "Nutzererfahrung verstehen"
+      icon: "🗺️"
+      keywords: ["journey", "experience", "erfahrung", "ablauf", "prozess", "touchpoint"]
+      
+    - key: solutionSketch
+      title: "Lösungsskizze"
+      description: "Konzepte entwickeln"
+      icon: "✏️"
+      keywords: ["lösung", "solution", "konzept", "idee", "design", "sketch"]
+      
+    - key: acceptanceCriteria
+      title: "Akzeptanzkriterien"
+      description: "Erfolgsmessung definieren"
+      icon: "✅"
+      keywords: ["akzeptanz", "kriterium", "acceptance", "erfolg", "metric", "kpi"]
+
+# =====================================================================
+# SERVER CONFIGURATION
+# =====================================================================
+server:
+  host: "0.0.0.0"
+  port: 8000
+  cors_origins: ["*"]  # For production, specify exact origins
+  reload: true  # Auto-reload on code changes (development only)
+  log_level: "info"
