@@ -434,7 +434,6 @@
                 loading: false,
                 isActive: false,
                 startTime: Date.now(),
-                commandMode: false,
                 showExport: false,
                 frameworkLoading: true, // Add loading state for framework
                 
@@ -494,12 +493,6 @@
                     const userMessage = this.newMessage.trim();
                     this.newMessage = '';
                     this.loading = true;
-
-                    // Handle commands
-                    if (this.commandMode && userMessage.startsWith('/')) {
-                        this.executeCommand(userMessage);
-                        return;
-                    }
 
                     // Add user message
                     this.messages.push({
@@ -640,6 +633,74 @@
                         this.scrollToBottom();
                     }
                 },
+
+                async generateStructuredSummary() {
+                    if (this.progressPercentage < 100) {
+                        return;
+                    }
+
+                    this.loading = true;
+
+                    try {
+                        // Create a structured prompt for the AI to generate a comprehensive summary
+                        const summaryPrompt = `Bitte erstellen Sie eine strukturierte Zusammenfassung basierend auf unserem Design Thinking Prozess. Berücksichtigen Sie dabei alle Framework-Stufen, die wir durchlaufen haben:
+
+${this.frameworkSteps.filter(step => this.frameworkProgress[step.key]).map(step => 
+`- ${step.icon} ${step.title}: ${step.description}`
+).join('\n')}
+
+Erstellen Sie eine detaillierte Analyse mit folgenden Abschnitten:
+1. Problemübersicht
+2. Ursachenanalyse
+3. Lösungsansätze
+4. Zielgruppen
+5. Implementierungsplan
+6. Erfolgsmessung
+
+Nutzen Sie alle relevanten Informationen aus unserem Gespräch und strukturieren Sie diese in einem professionellen Format.`;
+
+                        const backendURL = window.backendURL || '';
+                        
+                        const response = await fetch(`${backendURL}/api/chat`, {
+                            method: 'POST',
+                            headers: {
+                                'Content-Type': 'application/json',
+                            },
+                            body: JSON.stringify({
+                                message: summaryPrompt,
+                                session_id: this.getSessionId()
+                            })
+                        });
+
+                        if (!response.ok) {
+                            throw new Error(`HTTP error! status: ${response.status}`);
+                        }
+
+                        const data = await response.json();
+
+                        // Add the structured summary as a special message
+                        this.messages.push({
+                            type: 'assistant',
+                            content: `## 📋 Strukturierte Design Thinking Zusammenfassung\n\n${data.message || data.reply}`,
+                            timestamp: Date.now(),
+                            isStructuredSummary: true
+                        });
+
+                        this.scrollToBottom();
+
+                    } catch (error) {
+                        console.error('Fehler bei der Zusammenfassung:', error);
+                        
+                        this.messages.push({
+                            type: 'assistant',
+                            content: '❌ Fehler bei der Erstellung der strukturierten Zusammenfassung. Bitte versuchen Sie es erneut.',
+                            timestamp: Date.now()
+                        });
+                    } finally {
+                        this.loading = false;
+                        this.scrollToBottom();
+                    }
+                },
                 
                 updateFrameworkProgress(content) {
                     const lower = content.toLowerCase();
@@ -661,6 +722,7 @@
                 },
 
                 executeCommand(command) {
+                    // This function is kept for internal use by buttons
                     this.loading = false;
                     
                     if (command === '/reset') {
@@ -679,25 +741,6 @@
                         this.downloadSession();
                     } else if (command === '/export') {
                         this.showExport = true;
-                    } else if (command === '/clear') {
-                        this.messages = [];
-                    } else if (command === '/help') {
-                        this.messages.push({
-                            type: 'system',
-                            content: `📖 Verfügbare Befehle:
-/reset - Session zurücksetzen
-/save - Session als JSON speichern
-/export - Strukturierte Ausgabe exportieren
-/clear - Chat-Verlauf löschen
-/help - Diese Hilfe anzeigen`,
-                            timestamp: Date.now()
-                        });
-                    } else {
-                        this.messages.push({
-                            type: 'system',
-                            content: `❓ Unbekannter Befehl: ${command}. Verwenden Sie /help für verfügbare Befehle.`,
-                            timestamp: Date.now()
-                        });
                     }
 
                     this.$nextTick(() => this.scrollToBottom());
