@@ -31,7 +31,6 @@ config/master_config.yaml.backup
 config/master_config.yaml.bak
 
 # Temporary development files
-dev-server.cjs
 temp/
 tmp/
 
