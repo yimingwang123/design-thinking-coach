@@ -77,8 +77,12 @@ class ConfigManager:
         Returns:
             Full config dict or section dict
         """
-        if section and section in self._config:
-            return self._config[section]
+        if section:
+            if section in self._config:
+                return self._config[section]
+            else:
+                logger.warning(f"Section '{section}' not found in config, returning empty dict")
+                return {}
         return self._config
 
     def reload_config(self):
