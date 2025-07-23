@@ -31,10 +31,21 @@ class ConfigManager:
 
     def _load_config(self):
         """Load the master configuration file"""
-        config_path = os.getenv("CONFIG_PATH", "config/master_config.yaml")
+        # Get the absolute path to the project root directory
+        project_root = Path(__file__).parent.parent
+        config_rel_path = os.getenv("CONFIG_PATH", "config/master_config.yaml")
+        config_abs_path = project_root / config_rel_path
+        
+        logger.info(f"Loading config from absolute path: {config_abs_path}")
         try:
-            self._config = load_yaml(config_path)
-            logger.info(f"Master configuration loaded from {config_path}")
+            self._config = load_yaml(str(config_abs_path))
+            logger.info(f"Master configuration loaded from {config_abs_path}")
+            # Debug: Log the actual keys to verify structure
+            logger.info(f"Config has {len(self._config)} top-level keys: {list(self._config.keys())}")
+            if 'framework' in self._config:
+                logger.info(f"Framework section found with keys: {list(self._config['framework'].keys())}")
+            else:
+                logger.warning("No 'framework' section found in loaded config!")
         except Exception as e:
             logger.error(f"Failed to load master config: {e}")
             self._config = self._get_fallback_config()
@@ -77,8 +88,11 @@ class ConfigManager:
         Returns:
             Full config dict or section dict
         """
+        # Debug logging to see what's happening with the config
+        logger.info(f"Config keys: {list(self._config.keys())}")
         if section:
             if section in self._config:
+                logger.info(f"Section '{section}' found in config, keys: {list(self._config[section].keys()) if isinstance(self._config[section], dict) else 'Not a dict'}")
                 return self._config[section]
             else:
                 logger.warning(f"Section '{section}' not found in config, returning empty dict")

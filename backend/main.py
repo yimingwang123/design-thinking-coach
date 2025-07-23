@@ -62,6 +62,8 @@ class ChatResponse(BaseModel):
 @app.on_event("startup")
 async def startup_event():
     """Initialize services on startup"""
+    # Force reload config at startup to ensure we have the latest
+    config_manager.reload_config()
     logger.info("🚀 Design Thinking Coach API started successfully!")
     logger.info("📡 Azure OpenAI connection established")
     logger.info("🌐 Frontend will be served from /")
@@ -175,9 +177,13 @@ async def health_check():
 async def get_config():
     """Get current configuration (without sensitive data)"""
     try:
+        # Debug: Explicitly log the framework section being retrieved
+        framework_config = config_manager.get_config("framework")
+        logger.info(f"API endpoint retrieved framework config: {framework_config}")
+        
         config = {
             "application": config_manager.get_config("application"),
-            "framework": config_manager.get_config("framework"),
+            "framework": framework_config,
             "model": {
                 "deployment_name": config_manager.get_model_config().get("deployment_name"),
                 "temperature": config_manager.get_model_config().get("temperature"),
@@ -189,6 +195,10 @@ async def get_config():
                 "examples_length": len(config_manager.get_prompt_config().get("examples", ""))
             }
         }
+        
+        # Debug: Log the final response structure
+        logger.info(f"API response contains framework keys: {list(config['framework'].keys()) if isinstance(config['framework'], dict) else 'Not a dict'}")
+        
         return {"config": config}
     except Exception as e:
         logger.error(f"❌ Config endpoint error: {str(e)}")
