@@ -314,9 +314,9 @@
                             <!-- User Message -->
                             <div x-show="message.type === 'user'" 
                                  class="flex justify-end">
-                                <div class="bg-blue-600/90 text-white rounded-lg px-4 py-2 max-w-xs lg:max-w-md shadow-lg">
+                                <div class="bg-blue-600/90 text-white rounded-lg px-4 py-2 max-w-2xl lg:max-w-4xl shadow-lg">
                                     <div class="flex items-start space-x-2">
-                                        <div>
+                                        <div class="flex-1">
                                             <div class="whitespace-pre-wrap" x-text="message.content"></div>
                                             <span class="text-xs text-white/80 block mt-1" x-text="formatTime(message.timestamp)"></span>
                                         </div>
@@ -328,11 +328,11 @@
                             <!-- Assistant Message -->
                             <div x-show="message.type === 'assistant'" 
                                  class="flex justify-start">
-                                <div class="bg-gray-800/90 text-white rounded-lg px-4 py-2 max-w-xs lg:max-w-md shadow-lg">
+                                <div class="bg-gray-800/90 text-white rounded-lg px-4 py-2 max-w-2xl lg:max-w-4xl shadow-lg">
                                     <div class="flex items-start space-x-2">
                                         <span class="text-lg">🤖</span>
-                                        <div>
-                                            <div class="whitespace-pre-wrap prose prose-sm max-w-none text-white prose-headings:text-white prose-p:text-white prose-strong:text-white prose-ul:text-white prose-ol:text-white" x-html="formatMarkdown(message.content)"></div>
+                                        <div class="flex-1">
+                                            <div class="whitespace-pre-wrap prose prose-sm max-w-none text-white prose-headings:text-white prose-p:text-white prose-strong:text-white prose-ul:text-white prose-ol:text-white prose-table:text-white prose-th:text-white prose-td:text-white prose-th:border-white/20 prose-td:border-white/20" x-html="formatMarkdown(message.content)"></div>
                                             <span class="text-xs text-white/80 block mt-1" x-text="formatTime(message.timestamp)"></span>
                                         </div>
                                     </div>
@@ -813,7 +813,9 @@ Nutzen Sie alle relevanten Informationen aus unserem Gespräch und strukturieren
                     const a = document.createElement('a');
                     a.href = url;
                     a.download = `design-thinking-analyse-${new Date().toISOString().split('T')[0]}.md`;
+                    document.body.appendChild(a);
                     a.click();
+                    document.body.removeChild(a);
                     URL.revokeObjectURL(url);
                 },
 
