@@ -112,6 +112,12 @@ framework:
       icon: "✅"
       keywords: ["akzeptanz", "kriterium", "acceptance", "erfolg", "metric", "kpi"]
 
+    - key: missingAspects
+      title: "Hast du etwas vergessen?"
+      description: "Fehlende Aspekte identifizieren"
+      icon: "🤔"
+      keywords: ["vergessen", "fehlt", "missing", "incomplete", "unvollständig", "aspekt", "lücke", "gap"]
+
 # =====================================================================
 # SERVER CONFIGURATION
 # =====================================================================
